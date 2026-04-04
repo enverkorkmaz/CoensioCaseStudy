@@ -5,7 +5,6 @@ import CandidateList from "./components/CandidateList";
 
 function App() {
   const [results, setResults] = useState<SearchResult[]>([]);
-  const [debug, setDebug] = useState<SearchResponse["debug"] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [searched, setSearched] = useState(false);
@@ -26,11 +25,9 @@ function App() {
 
       const data: SearchResponse = await response.json();
       setResults(data.results);
-      setDebug(data.debug);
     } catch {
       setError("Arama yapılırken bir hata oluştu. Backend çalışıyor mu?");
       setResults([]);
-      setDebug(null);
     } finally {
       setLoading(false);
     }

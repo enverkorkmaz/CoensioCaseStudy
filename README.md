@@ -14,7 +14,7 @@ The project is developed with a modern and scalable architecture:
 ## 📋 Prerequisites
 
 To run the project on your machine, you need to have the following installed:
-- Node.js (v18+)
+- Node.js (v22+)
 - Python (v3.12+)
 - Docker Desktop (or Docker Engine & Docker Compose)
 - A valid OpenAI API Key
@@ -34,7 +34,7 @@ OPENAI_API_KEY=sk-your-openai-api-key
 
 Then, start all services in the root directory:
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
 ```
 - Frontend: `http://localhost:5173`
 - Backend API: `http://localhost:8000`
@@ -42,7 +42,7 @@ docker-compose up -d --build
 
 > **Important Note (For First Setup Only):** After the system is up and running, you need to populate the database with dummy candidates (seeding). You can run `seed.py` by sending a command to the backend container:
 > ```bash
-> docker-compose exec backend python seed.py
+> docker compose exec backend python seed.py
 > ```
 > *Once the data is added, the system is fully ready to use!*
 
@@ -55,7 +55,7 @@ If you strictly want to use Docker for the database (Qdrant) and run the Backend
 #### 1. Running Only the Database (Qdrant)
 
 ```bash
-docker-compose up -d qdrant
+docker compose up -d qdrant
 ```
 
 #### 2. Backend Setup & Seeding
