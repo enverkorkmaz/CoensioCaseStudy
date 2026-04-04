@@ -1,6 +1,6 @@
 # AI Candidate Search System
 
-This project is an AI-powered candidate search and matching system. It allows companies to find the most suitable candidates for their open positions using natural language queries. Users can type queries in everyday language, such as *"Senior React Developer living in Istanbul with at least 3 years of experience"*. The system analyzes this query (extracting the Ideal Candidate Profile - ICP) and lists the best candidates from the database by calculating semantic similarities.
+This project is an AI-powered candidate search and matching system. It allows companies to find the most suitable candidates for their open positions using natural language queries. Users can type queries in everyday language, such as *"Senior React Developer living in Istanbul with at least 3 years of experience"*. The system analyzes this query and lists the best candidates from the database by calculating semantic similarities.
 
 ## 🚀 Technologies & Architecture
 
@@ -9,7 +9,58 @@ The project is developed with a modern and scalable architecture:
 - **Backend (API):** FastAPI, Python, Pydantic
 - **AI & Semantic Search:** OpenAI (Embeddings & Completion API), Qdrant (Vector Database)
 - **Frontend (User Interface):** React, TypeScript, Vite, Tailwind CSS
-- **Infrastructure:** Docker & Docker Compose 
+- **Infrastructure:** Docker & Docker Compose
+
+## 🧠 How It Works
+
+The system uses a **hybrid search** approach combining metadata filtering with semantic search:
+
+1. **ICP Parsing (Bonus Feature):** The user's natural language query is sent to GPT-4o-mini, which extracts structured information — location, skills, years of experience, and university — as an Ideal Candidate Profile (ICP). This is the bonus feature mentioned in the case study.
+
+2. **Metadata Filtering:** Hard constraints like location, experience, and university are applied as Qdrant payload filters to narrow down the candidate pool.
+
+3. **Semantic Search:** The remaining free-text portion of the query is converted into a 1536-dimensional vector using OpenAI's `text-embedding-3-small` model. Qdrant performs cosine similarity search within the filtered pool.
+
+4. **Skill Filtering:** Skills extracted by ICP are used for case-insensitive post-filtering in Python (dual representation — skills are also included in the semantic search text).
+
+## 📁 Project Structure
+
+```
+CoensioCaseStudy/
+├── docker-compose.yml              # All services (Qdrant, Backend, Frontend)
+├── NOTLAR.md                        # Technical notes (RAG, Vector DB vs SQL, improvements)
+├── README.md                        # Setup & usage instructions
+│
+├── backend/
+│   ├── .env                         # OpenAI API key (not tracked by git)
+│   ├── Dockerfile                   # Backend container definition
+│   ├── requirements.txt             # Python dependencies
+│   ├── config.py                    # Central configuration (API keys, Qdrant settings)
+│   ├── models.py                    # Pydantic models (Candidate, SearchRequest, etc.)
+│   ├── main.py                      # FastAPI app — API endpoints, search orchestration
+│   ├── seed.py                      # Database seeder — 10 demo candidates
+│   └── services/
+│       ├── embedding.py             # OpenAI text → vector conversion
+│       ├── icp_service.py           # GPT-powered query parsing (ICP - bonus)
+│       └── qdrant_service.py        # Qdrant operations (create, upsert, search)
+│
+└── frontend/
+    ├── Dockerfile                   # Frontend container (multi-stage: build + nginx)
+    ├── index.html                   # HTML entry point
+    ├── package.json                 # Node dependencies
+    ├── vite.config.ts               # Vite configuration
+    ├── tailwind.config.js           # Tailwind CSS configuration
+    └── src/
+        ├── main.tsx                 # React entry point
+        ├── App.tsx                  # Main component — search logic, API calls
+        ├── index.css                # Tailwind imports
+        ├── types/
+        │   └── candidate.ts         # TypeScript interfaces
+        └── components/
+            ├── SearchBar.tsx         # Search input + button
+            ├── CandidateCard.tsx     # Single candidate result card
+            └── CandidateList.tsx     # List of candidate cards
+```
 
 ## 📋 Prerequisites
 
@@ -27,7 +78,7 @@ You can start the project easily using Docker, or set it up manually.
 
 You can use the `docker-compose.yml` file in the root directory to spin up the Backend, Frontend, and Qdrant database all at once.
 
-First, to use the API, make sure you create a `.env` file inside the `backend` folder and add your OpenAI key:
+First, create a `.env` file inside the `backend` folder and add your OpenAI key:
 ```env
 OPENAI_API_KEY=sk-your-openai-api-key
 ```
@@ -40,7 +91,7 @@ docker compose up -d --build
 - Backend API: `http://localhost:8000`
 - Qdrant: `http://localhost:6333`
 
-> **Important Note (For First Setup Only):** After the system is up and running, you need to populate the database with dummy candidates (seeding). You can run `seed.py` by sending a command to the backend container:
+> **Important Note (For First Setup Only):** After the system is up and running, you need to populate the database with dummy candidates (seeding):
 > ```bash
 > docker compose exec backend python seed.py
 > ```
@@ -50,7 +101,7 @@ docker compose up -d --build
 
 ### Manual Setup (Alternative)
 
-If you strictly want to use Docker for the database (Qdrant) and run the Backend and Frontend independently on your host machine, follow these steps in order.
+If you want to use Docker only for the database (Qdrant) and run the Backend and Frontend independently on your host machine, follow these steps.
 
 #### 1. Running Only the Database (Qdrant)
 
@@ -59,8 +110,6 @@ docker compose up -d qdrant
 ```
 
 #### 2. Backend Setup & Seeding
-
-Go to the backend directory, install dependencies, and configure settings:
 
 ```bash
 cd backend
@@ -73,46 +122,44 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Create a `.env` file in the backend folder and add your OpenAI API key like this:
+Create a `.env` file in the backend folder:
 ```env
 OPENAI_API_KEY=sk-your-openai-api-key
 ```
 
-Run the `seed.py` file to insert sample candidate data into the Qdrant database and perform embedding processes:
+Seed the database and start the server:
 ```bash
 python seed.py
-```
-
-Start the FastAPI server:
-```bash
 uvicorn main:app --reload
 ```
-*The Backend API will now be running at `http://localhost:8000`. You can access the Swagger UI documentation at `http://localhost:8000/docs`.*
+*Backend API: `http://localhost:8000` | Swagger UI: `http://localhost:8000/docs`*
 
 #### 3. Frontend Setup
 
-Open a new terminal, go to the frontend directory, and start the React application:
-
 ```bash
 cd frontend
-
-# Install dependencies:
 npm install
-
-# Start development server:
 npm run dev
 ```
-*You can usually access the application interface at `http://localhost:5173`. Please check the terminal output.*
+*Frontend: `http://localhost:5173`*
 
 ## 💡 Usage
 
-When using the system, open the frontend interface and type a query in natural language into the search bar.
+Open the frontend interface and type a query in natural language into the search bar.
 
 **Example Queries:**
 - *"Software developers who know React and live in Istanbul"*
 - *"A university graduate Python developer with at least 5 years of experience"*
 - *"Junior Data Scientists in Ankara"*
+- *"TypeScript bilen frontend developer"*
+- *"Bilkent mezunu Docker bilen"*
 
-The system will use OpenAI to parse the Ideal Candidate Profile (Location, Skills, Years of Experience, University info, etc.) from your sentence and run a semantic search on Qdrant to present you with the most relevant candidates.
+The system will parse the Ideal Candidate Profile (ICP) from your sentence using GPT-4o-mini, apply metadata filters (location, experience, university) on Qdrant, run semantic search with cosine similarity, and present the most relevant candidates.
 
----
+## 📝 Technical Notes
+
+See [NOTLAR.md](NOTLAR.md) for detailed technical notes covering:
+- What is RAG and how it was applied in this project
+- Why vector databases over traditional SQL
+- Architectural decisions and limitations
+- Potential improvements (multi-embedding, HyDE, re-ranking, generation)
