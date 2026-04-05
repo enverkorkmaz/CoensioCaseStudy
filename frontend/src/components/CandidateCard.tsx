@@ -42,6 +42,11 @@ export default function CandidateCard({ result, rank }: CandidateCardProps) {
           </span>
         ))}
       </div>
+      <div className="flex flex-wrap gap1.5">
+        <p className="mt-3 text-sm text-gray-500">
+        {candidate.summary}
+      </p>
+      </div>
 
       <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400 font-mono">
         Cosine Similarity: {score.toFixed(4)}
