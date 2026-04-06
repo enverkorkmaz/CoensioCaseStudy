@@ -42,7 +42,8 @@ CoensioCaseStudy/
 │   └── services/
 │       ├── embedding.py             # OpenAI text → vector conversion
 │       ├── icp_service.py           # GPT-powered query parsing (ICP - bonus)
-│       └── qdrant_service.py        # Qdrant operations (create, upsert, search)
+│       ├── qdrant_service.py        # Qdrant operations (create, upsert, search)
+        └── candidate_service.py     # Candidate search 
 │
 └── frontend/
     ├── Dockerfile                   # Frontend container (multi-stage: build + nginx)
