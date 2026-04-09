@@ -58,16 +58,11 @@ Vektör veritabanı seçenekleri arasında Pinecone, Weaviate, Chroma gibi alter
 ## Daha Fazla Zamanım Olsaydı Ne Eklerdim?
 
 ### Cosine Similarity Skorlarının İyileştirilmesi
-bunun için bi süre ugraştım
-Şu anki sistemde cosine similarity skorları düşük çıkıyor (0.20–0.50 arası genellikle max 0.60 geliyor) ve birbirine çok yakın. Bunun iki ana sebebi var
+Başlangıçta cosine similarity skorları 0.20–0.50 arasında kalıyordu ve adaylar arasında anlamlı bir ayrışma olmuyordu. HyDE ile bu sorunu büyük ölçüde çözdüm, skorlar 0.70+ seviyesine çıktı. Ancak hâlâ iyileştirilebilecek noktalar var.
 
-Kısa summary metinleri:
-4 satırlık özet metinlerde embedding modeli yeterince anlamsal sinyal bulamıyor. Farklı profiller birbirine çok yakın vektörler üretiyor. Araştırmamda gördüm ki bu bilinen bir sorun çözümü, summary'lere etiketli alanlar eklemek ("Skills:", "Experience:" gibi) ve proje detayları, sorumluluklar gibi zengin içerik yazmak.(Yine de daha fazla adaya ve bilgiye(Metin, vektör için) ihtiyac var)
+Kısa summary metinleri: 4-5 satırlık özet metinlerde embedding modeli yeterince anlamsal sinyal bulamıyor. Çözümü summary'lere etiketli alanlar eklemek ("Skills:", "Experience:" gibi) ve proje detayları, sorumluluklar gibi zengin içerik yazmak. Daha fazla adaya da ihtiyaç var — 10 adaylık havuzda tüm skorlar birbirine yakın çıkıyor, aday sayısı arttıkça gerçekten alakasız olanlar ayrışır.
 
-text-embedding-3-small modelinin: 
-Bu model düşük cosine similarity skorları üretiyor. Daha büyük modellerde veya daha iyi modellerde daha iyi similarity skorları görebiliriz.
-
-Küçük veri seti: 10 adaylık bir havuzda tüm skorlar birbirine yakın çıkıyor. Aday sayısı arttıkça gerçekten alakasız olanlar düşük alakalılar yüksek skor alır ve ayrışma netleşir.
+text-embedding-3-small modeli cosine similarity açısından yeterli ama sınırlı. Daha büyük modeller (text-embedding-3-large gibi) daha iyi ayrışma sağlıyor, ancak API maliyeti artıyor.
 
 ### Multi-Embedding Yaklaşımı
 Şu an her aday için tek bir vektör üretiyorum. Ancak araştırmamda gördüm ki production sistemlerde aday başına birden fazla embedding kullanılıyor skills için ayrı, deneyim için ayrı, eğitim için ayrı vektörler. Bu vektörler ağırlıklı olarak birleştiriliyor (örneğin 0.4 × skills + 0.35 × experience + 0.15 × education + 0.1 × diğer). Qdrant bunu named vectors özelliği ile destekliyor. Bu yaklaşım, tek vektörde farklı bilgilerin birbirine karışması sorununu çözer.
