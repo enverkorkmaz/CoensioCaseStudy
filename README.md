@@ -38,9 +38,9 @@ CoensioCaseStudy/
 │   ├── main.py                     # FastAPI app
 │   ├── seed.py                     # Database seeder — 10 demo candidates
 │   └── services/
-│       ├── embedding.py            # OpenAI text → vector conversion
-│       ├── icp_service.py          # GPT query parsing (ICP) + HyDE profile generation
-│       └── qdrant_service.py       # Qdrant operations (create, upsert, search)
+│       ├── embedding.py             # OpenAI text → vector conversion
+│       ├── icp_service.py           # GPT-powered query parsing (ICP - bonus)
+│       └── qdrant_service.py        # Qdrant operations (create, upsert, search)
 │
 └── frontend/
     ├── Dockerfile
@@ -130,9 +130,8 @@ Open `http://localhost:5173` and type a natural language query.
 
 ## Technical Notes
 
-See [NOTLAR.md](NOTLAR.md) for detailed notes on:
-- What is RAG and how it was applied
-- Why vector databases over SQL
-- Why FastAPI and Qdrant were chosen
-- HyDE implementation and similarity score improvements
-- Potential improvements (LLM re-ranking, multi-embedding, unit tests)
+See [NOTLAR.md](NOTLAR.md) for detailed technical notes covering:
+- What is RAG and how it was applied in this project
+- Why vector databases over traditional SQL
+- Architectural decisions and limitations
+- Potential improvements (multi-embedding, HyDE, re-ranking, generation)
