@@ -33,21 +33,26 @@ CoensioCaseStudy/
 │   ├── .env                        # OpenAI API key (not tracked by git)
 │   ├── Dockerfile
 │   ├── requirements.txt
-│   ├── config.py                   # Central configuration
+│   ├── config.py                   # Central configuration (API keys, Qdrant settings)
 │   ├── models.py                   # Pydantic models (Candidate, SearchRequest, DebugInfo...)
-│   ├── main.py                     # FastAPI app
+│   ├── main.py                     # FastAPI app — endpoints, logging config
 │   ├── seed.py                     # Database seeder — 10 demo candidates
 │   └── services/
+│       ├── candidate_service.py     # Search orchestration — ICP, HyDE, filters, results
 │       ├── embedding.py             # OpenAI text → vector conversion
-│       ├── icp_service.py           # GPT-powered query parsing (ICP - bonus)
+│       ├── icp_service.py           # ICP query parsing + HyDE profile generation
 │       └── qdrant_service.py        # Qdrant operations (create, upsert, search)
 │
 └── frontend/
-    ├── Dockerfile
+    ├── Dockerfile                  # Multi-stage: Node build + Nginx serve
+    ├── index.html                  # HTML entry point
     ├── package.json
     ├── vite.config.ts
+    ├── tailwind.config.js
     └── src/
+        ├── main.tsx                # React entry point
         ├── App.tsx                 # Main component — search logic, API calls
+        ├── index.css               # Tailwind imports
         ├── types/
         │   └── candidate.ts        # TypeScript interfaces
         └── components/
@@ -132,6 +137,7 @@ Open `http://localhost:5173` and type a natural language query.
 
 See [NOTLAR.md](NOTLAR.md) for detailed technical notes covering:
 - What is RAG and how it was applied in this project
+- Why FastAPI and Qdrant were chosen
 - Why vector databases over traditional SQL
-- Architectural decisions and limitations
-- Potential improvements (multi-embedding, HyDE, re-ranking, generation)
+- HyDE implementation and cosine similarity improvements
+- Potential improvements (LLM re-ranking, multi-embedding, unit tests)
