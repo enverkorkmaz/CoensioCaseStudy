@@ -14,21 +14,30 @@ function App() {
     setError("");
     setSearched(true);
 
-   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    try {
       const response = await fetch("http://localhost:8000/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query, top_k: 10 }),
+        signal: controller.signal,
       });
 
       if (!response.ok) throw new Error("API hatası");
 
       const data: SearchResponse = await response.json();
       setResults(data.results);
-    } catch {
-      setError("Arama yapılırken bir hata oluştu. Backend çalışıyor mu?");
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setError("İstek zaman aşımına uğradı. Backend çalışıyor mu?");
+      } else {
+        setError("Arama yapılırken bir hata oluştu. Backend çalışıyor mu?");
+      }
       setResults([]);
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   };

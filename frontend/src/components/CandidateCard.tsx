@@ -42,7 +42,7 @@ export default function CandidateCard({ result, rank }: CandidateCardProps) {
           </span>
         ))}
       </div>
-      <div className="flex flex-wrap gap1.5">
+      <div className="flex flex-wrap gap-1.5">
         <p className="mt-3 text-sm text-gray-500">
         {candidate.summary}
       </p>

@@ -1,8 +1,10 @@
+import logging
 from qdrant_client import QdrantClient
-from qdrant_client.models import VectorParams, Distance, PointStruct, Filter, FieldCondition, MatchValue, MatchAny, Range
+from qdrant_client.models import VectorParams, Distance, PointStruct, Filter, FieldCondition, MatchValue, Range
 from config import QDRANT_HOST, QDRANT_PORT, COLLECTION_NAME, EMBEDDING_DIMENSION
 from models import Candidate, SearchResult
 
+logger = logging.getLogger(__name__)
 client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
 
 
@@ -12,7 +14,7 @@ def init_collection():
 
     if exists:
         client.delete_collection(COLLECTION_NAME)
-        print(f"[Qdrant] '{COLLECTION_NAME}' collection silindi")
+        logger.info(f"'{COLLECTION_NAME}' collection silindi")
 
     client.create_collection(
         collection_name=COLLECTION_NAME,
@@ -21,7 +23,7 @@ def init_collection():
             distance=Distance.COSINE
         )
     )
-    print(f"[Qdrant] '{COLLECTION_NAME}' collection oluşturuldu (boyut: {EMBEDDING_DIMENSION})")
+    logger.info(f"'{COLLECTION_NAME}' collection oluşturuldu (boyut: {EMBEDDING_DIMENSION})")
 
 
 def upsert_candidate(candidate: Candidate, embedding: list[float]):
@@ -44,7 +46,7 @@ def upsert_candidate(candidate: Candidate, embedding: list[float]):
             )
         ]
     )
-    print(f"[Qdrant] Aday eklendi: {candidate.name}")
+    logger.info(f"Aday eklendi: {candidate.name}")
 
 
 def search_candidates(query_embedding: list[float], top_k: int = 5, filters: dict = None) -> list[SearchResult]:
@@ -55,25 +57,15 @@ def search_candidates(query_embedding: list[float], top_k: int = 5, filters: dic
 
         if filters.get("location"):
             conditions.append(
-                FieldCondition(
-                    key="location",
-                    match=MatchValue(value=filters["location"])
-                )
+                FieldCondition(key="location", match=MatchValue(value=filters["location"]))
             )
-
         if filters.get("min_experience"):
             conditions.append(
-                FieldCondition(
-                    key="experience_years",
-                    range=Range(gte=filters["min_experience"])
-                )
+                FieldCondition(key="experience_years", range=Range(gte=filters["min_experience"]))
             )
         if filters.get("university"):
             conditions.append(
-                FieldCondition(
-                    key="university",
-                    match=MatchValue(value=filters["university"])
-                )
+                FieldCondition(key="university", match=MatchValue(value=filters["university"]))
             )
         if conditions:
             query_filter = Filter(must=conditions)
@@ -100,6 +92,5 @@ def search_candidates(query_embedding: list[float], top_k: int = 5, filters: dic
         )
         search_results.append(SearchResult(candidate=candidate, score=round(point.score, 4)))
 
-    print(f"[Qdrant] {len(search_results)} aday bulundu (filtre: {filters})")
+    logger.info(f"{len(search_results)} aday bulundu (filtre: {filters})")
     return search_results
-  

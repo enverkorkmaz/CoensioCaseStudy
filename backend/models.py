@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class Candidate(BaseModel):
     id: int
@@ -12,13 +12,20 @@ class Candidate(BaseModel):
     summary: str
 
 class SearchRequest(BaseModel):
-    query: str
-    top_k: int = 10
+    query: str = Field(min_length=1, max_length=500)
+    top_k: int = Field(default=10, ge=1, le=100)
 
 class SearchResult(BaseModel):
     candidate: Candidate
-    score: float        
+    score: float
+
+class DebugInfo(BaseModel):
+    parsed_icp: dict
+    hyde_profile: str
+    filters_applied: dict
+    candidates_after_metadata_filter: int
+    returned: int
 
 class SearchResponse(BaseModel):
     results: list[SearchResult]
-    debug: dict   
+    debug: DebugInfo   

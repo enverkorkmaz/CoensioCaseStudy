@@ -1,165 +1,138 @@
 # AI Candidate Search System
 
-This project is an AI-powered candidate search and matching system. It allows companies to find the most suitable candidates for their open positions using natural language queries. Users can type queries in everyday language, such as *"Senior React Developer living in Istanbul with at least 3 years of experience"*. The system analyzes this query and lists the best candidates from the database by calculating semantic similarities.
+This project is an AI-powered candidate search and matching system. Users can type queries in natural language, such as *"Senior React Developer living in Istanbul with at least 3 years of experience"*. The system analyzes the query and lists the best matching candidates using semantic similarity.
 
-## 🚀 Technologies & Architecture
+## Technologies & Architecture
 
-The project is developed with a modern and scalable architecture:
-
-- **Backend (API):** FastAPI, Python, Pydantic
-- **AI & Semantic Search:** OpenAI (Embeddings & Completion API), Qdrant (Vector Database)
-- **Frontend (User Interface):** React, TypeScript, Vite, Tailwind CSS
+- **Backend:** FastAPI, Python, Pydantic
+- **AI & Semantic Search:** OpenAI (Embeddings & Chat API), Qdrant (Vector Database)
+- **Frontend:** React, TypeScript, Vite, Tailwind CSS
 - **Infrastructure:** Docker & Docker Compose
 
-## 🧠 How It Works
+## How It Works
 
-The system uses a **hybrid search** approach combining metadata filtering with semantic search:
+The system uses a pipeline combining ICP parsing, HyDE, metadata filtering, and semantic search:
 
-1. **ICP Parsing (Bonus Feature):** The user's natural language query is sent to GPT-4o-mini, which extracts structured information — location, skills, years of experience, and university — as an Ideal Candidate Profile (ICP). This is the bonus feature mentioned in the case study.
+1. **ICP Parsing:** The user's natural language query is sent to GPT-4o-mini, which extracts structured information — location, skills, years of experience, and university — as an Ideal Candidate Profile (ICP). This is the bonus feature mentioned in the case study.
 
-2. **Metadata Filtering:** Hard constraints like location, experience, and university are applied as Qdrant payload filters to narrow down the candidate pool.
+2. **HyDE (Hypothetical Document Embeddings):** Instead of embedding the query directly, GPT-4o-mini generates a hypothetical candidate profile that matches the query. This profile is in the same format as real candidate summaries, so it produces much closer vectors in embedding space — significantly improving cosine similarity scores (from 0.20–0.50 to 0.70+).
 
-3. **Semantic Search:** The remaining free-text portion of the query is converted into a 1536-dimensional vector using OpenAI's `text-embedding-3-small` model. Qdrant performs cosine similarity search within the filtered pool.
+3. **Metadata Filtering:** Hard constraints extracted by ICP (location, experience, university) are applied as Qdrant payload filters to narrow down the candidate pool.
 
-4. **Skill Filtering:** Skills extracted by ICP are used for case-insensitive post-filtering in Python (dual representation — skills are also included in the semantic search text).
+4. **Semantic Search:** The HyDE embedding is used for cosine similarity search within the filtered pool. Skills are handled semantically through HyDE rather than as a hard filter.
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 CoensioCaseStudy/
 ├── docker-compose.yml              # All services (Qdrant, Backend, Frontend)
-├── NOTLAR.md                        # Technical notes (RAG, Vector DB vs SQL, improvements)
-├── README.md                        # Setup & usage instructions
+├── NOTLAR.md                       # Technical notes (RAG, Vector DB vs SQL, improvements)
+├── README.md                       # Setup & usage instructions
 │
 ├── backend/
-│   ├── .env                         # OpenAI API key (not tracked by git)
-│   ├── Dockerfile                   # Backend container definition
-│   ├── requirements.txt             # Python dependencies
-│   ├── config.py                    # Central configuration (API keys, Qdrant settings)
-│   ├── models.py                    # Pydantic models (Candidate, SearchRequest, etc.)
-│   ├── main.py                      # FastAPI app — API endpoints, search orchestration
-│   ├── seed.py                      # Database seeder — 10 demo candidates
+│   ├── .env                        # OpenAI API key (not tracked by git)
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   ├── config.py                   # Central configuration
+│   ├── models.py                   # Pydantic models (Candidate, SearchRequest, DebugInfo...)
+│   ├── main.py                     # FastAPI app
+│   ├── seed.py                     # Database seeder — 10 demo candidates
 │   └── services/
-│       ├── embedding.py             # OpenAI text → vector conversion
-│       ├── icp_service.py           # GPT-powered query parsing (ICP - bonus)
-│       └── qdrant_service.py        # Qdrant operations (create, upsert, search)
+│       ├── embedding.py            # OpenAI text → vector conversion
+│       ├── icp_service.py          # GPT query parsing (ICP) + HyDE profile generation
+│       └── qdrant_service.py       # Qdrant operations (create, upsert, search)
 │
 └── frontend/
-    ├── Dockerfile                   # Frontend container (multi-stage: build + nginx)
-    ├── index.html                   # HTML entry point
-    ├── package.json                 # Node dependencies
-    ├── vite.config.ts               # Vite configuration
-    ├── tailwind.config.js           # Tailwind CSS configuration
+    ├── Dockerfile
+    ├── package.json
+    ├── vite.config.ts
     └── src/
-        ├── main.tsx                 # React entry point
-        ├── App.tsx                  # Main component — search logic, API calls
-        ├── index.css                # Tailwind imports
+        ├── App.tsx                 # Main component — search logic, API calls
         ├── types/
-        │   └── candidate.ts         # TypeScript interfaces
+        │   └── candidate.ts        # TypeScript interfaces
         └── components/
-            ├── SearchBar.tsx         # Search input + button
-            ├── CandidateCard.tsx     # Single candidate result card
-            └── CandidateList.tsx     # List of candidate cards
+            ├── SearchBar.tsx
+            ├── CandidateCard.tsx
+            └── CandidateList.tsx
 ```
 
-## 📋 Prerequisites
+## Prerequisites
 
-To run the project on your machine, you need to have the following installed:
-- Node.js (v22+)
-- Python (v3.12+)
 - Docker Desktop (or Docker Engine & Docker Compose)
 - A valid OpenAI API Key
 
-## 🛠️ Setup Instructions
+## Setup (Docker — Recommended)
 
-You can start the project easily using Docker, or set it up manually.
-
-### One-Click Setup (Full Docker Installation - Recommended)
-
-You can use the `docker-compose.yml` file in the root directory to spin up the Backend, Frontend, and Qdrant database all at once.
-
-First, create a `.env` file inside the `backend` folder and add your OpenAI key:
+Create a `.env` file inside the `backend` folder:
 ```env
 OPENAI_API_KEY=sk-your-openai-api-key
 ```
 
-Then, start all services in the root directory:
+Start all services:
 ```bash
 docker compose up -d --build
 ```
+
+Services start in order — Qdrant first, then backend (waits for Qdrant to be healthy), then frontend.
+
+Seed the database (first time only):
+```bash
+docker compose exec backend python seed.py
+```
+
 - Frontend: `http://localhost:5173`
 - Backend API: `http://localhost:8000`
+- Swagger UI: `http://localhost:8000/docs`
 - Qdrant: `http://localhost:6333`
 
-> **Important Note (For First Setup Only):** After the system is up and running, you need to populate the database with dummy candidates (seeding):
-> ```bash
-> docker compose exec backend python seed.py
-> ```
-> *Once the data is added, the system is fully ready to use!*
+## Setup (Manual)
 
----
-
-### Manual Setup (Alternative)
-
-If you want to use Docker only for the database (Qdrant) and run the Backend and Frontend independently on your host machine, follow these steps.
-
-#### 1. Running Only the Database (Qdrant)
-
+#### 1. Start Qdrant
 ```bash
 docker compose up -d qdrant
 ```
 
-#### 2. Backend Setup & Seeding
-
+#### 2. Backend
 ```bash
 cd backend
-
-# Create and activate virtual environment (Windows):
 python -m venv venv
-venv\Scripts\activate
-
-# Install dependencies:
+venv\Scripts\activate       # Windows
 pip install -r requirements.txt
 ```
 
-Create a `.env` file in the backend folder:
+Create `backend/.env`:
 ```env
 OPENAI_API_KEY=sk-your-openai-api-key
 ```
 
-Seed the database and start the server:
 ```bash
 python seed.py
 uvicorn main:app --reload
 ```
-*Backend API: `http://localhost:8000` | Swagger UI: `http://localhost:8000/docs`*
 
-#### 3. Frontend Setup
-
+#### 3. Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-*Frontend: `http://localhost:5173`*
 
-## 💡 Usage
+## Usage
 
-Open the frontend interface and type a query in natural language into the search bar.
+Open `http://localhost:5173` and type a natural language query.
 
-**Example Queries:**
-- *"Software developers who know React and live in Istanbul"*
-- *"A university graduate Python developer with at least 5 years of experience"*
-- *"Junior Data Scientists in Ankara"*
-- *"TypeScript bilen frontend developer"*
-- *"Bilkent mezunu Docker bilen"*
+**Example queries:**
+- `İstanbul'da React bilen senior developer`
+- `Ankara'da 3 yıl deneyimli Python backend developer`
+- `ODTÜ mezunu DevOps engineer`
+- `Boğaziçi'nden veri bilimci`
+- `TypeScript bilen full stack developer`
 
-The system will parse the Ideal Candidate Profile (ICP) from your sentence using GPT-4o-mini, apply metadata filters (location, experience, university) on Qdrant, run semantic search with cosine similarity, and present the most relevant candidates.
+## Technical Notes
 
-## 📝 Technical Notes
-
-See [NOTLAR.md](NOTLAR.md) for detailed technical notes covering:
-- What is RAG and how it was applied in this project
-- Why vector databases over traditional SQL
-- Architectural decisions and limitations
-- Potential improvements (multi-embedding, HyDE, re-ranking, generation)
+See [NOTLAR.md](NOTLAR.md) for detailed notes on:
+- What is RAG and how it was applied
+- Why vector databases over SQL
+- Why FastAPI and Qdrant were chosen
+- HyDE implementation and similarity score improvements
+- Potential improvements (LLM re-ranking, multi-embedding, unit tests)

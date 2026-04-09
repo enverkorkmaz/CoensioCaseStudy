@@ -1,6 +1,9 @@
 import json
-from openai import OpenAI
+import logging
+from openai import OpenAI, OpenAIError
 from config import OPENAI_API_KEY
+
+logger = logging.getLogger(__name__)
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -70,25 +73,54 @@ Cevap: {"location": null, "skills": ["AWS", "Docker"], "min_experience": null, "
 """
 
 
-def parse_query(query: str) -> dict:
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": query}
-        ],
-        temperature=0
-    )
+HYDE_PROMPT = """Verilen iş tanımına uyan ideal bir aday profili yaz.
+Aşağıdaki formatı kullan, başka bir şey ekleme:
 
-    content = response.choices[0].message.content.strip()
-    print(f"[ICP] GPT parse sonucu: {content}")
+İsim Soyisim | Başlık | Şehir
+Skill1, Skill2, Skill3
+N yıl deneyim
+Üniversite Adı - Bölüm Adı
+1-2 cümle özet: ne iş yapar, hangi teknolojilere hakimdir."""
+
+
+def generate_hypothetical_candidate(query: str) -> str:
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": HYDE_PROMPT},
+                {"role": "user", "content": query}
+            ],
+            temperature=0.3
+        )
+        result = response.choices[0].message.content.strip()
+        logger.info(f"HyDE profili üretildi:\n{result}")
+        return result
+    except OpenAIError as e:
+        logger.error(f"HyDE OpenAI hatası: {e}")
+        raise
+
+
+def parse_query(query: str) -> dict:
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": query}
+            ],
+            temperature=0
+        )
+        content = response.choices[0].message.content.strip()
+        logger.info(f"ICP parse sonucu: {content}")
+    except OpenAIError as e:
+        logger.error(f"ICP OpenAI hatası: {e}")
+        raise
 
     try:
         return json.loads(content)
     except json.JSONDecodeError as e:
-        print(f"[ICP] JSON parse hatası: {e}")
-        print(f"[ICP] GPT response: {content}")
-        print("[ICP] Fallback kullanılıyor")
+        logger.warning(f"ICP JSON parse hatası, fallback kullanılıyor: {e} | GPT response: {content}")
         return {
             "location": None,
             "skills": [],
